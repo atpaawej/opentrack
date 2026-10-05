@@ -3,21 +3,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors select-none',
+  'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors select-none font-mono tracking-tight',
   {
     variants: {
       variant: {
-        default:
-          'border-transparent bg-zinc-100 text-zinc-900 shadow hover:bg-zinc-200',
-        secondary:
-          'border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800',
-        destructive:
-          'border-red-900/40 bg-red-950/40 text-red-400 hover:bg-red-900/50',
-        outline: 'border-zinc-700/80 text-zinc-300',
-        success:
-          'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-        live:
-          'border-emerald-500/30 bg-emerald-950/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]',
+        default: 'border-zinc-800 bg-zinc-900/80 text-zinc-200',
+        outline: 'border-zinc-800 bg-transparent text-zinc-400',
+        secondary: 'border-zinc-850 bg-zinc-900/40 text-zinc-400',
+        subtle: 'border-transparent bg-zinc-900/60 text-zinc-400',
+        contrast: 'border-transparent bg-zinc-200 text-zinc-950 font-medium',
       },
     },
     defaultVariants: {

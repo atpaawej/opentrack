@@ -11,9 +11,18 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-geist-sans)', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+      },
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        accent: {
+          DEFAULT: '#3b82f6',
+          hover: '#2563eb',
+          subtle: 'rgba(59, 130, 246, 0.08)',
+        },
       },
       transitionTimingFunction: {
         'ease-out-custom': 'cubic-bezier(0.23, 1, 0.32, 1)',

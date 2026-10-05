@@ -4,7 +4,6 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FolderPlus, Sparkles } from 'lucide-react';
 import { createProjectAction } from '@/features/projects/actions';
 import { toast } from 'sonner';
 
@@ -39,7 +38,7 @@ export function CreateFirstProject() {
         return;
       }
 
-      toast.success(`Project "${res.project.name}" ready!`);
+      toast.success(`Project "${res.project.name}" created`);
       router.push(`/${res.project.slug}`);
     } catch {
       toast.error('Unexpected error creating project');
@@ -48,14 +47,13 @@ export function CreateFirstProject() {
   };
 
   return (
-    <Card className="w-full max-w-lg border-zinc-800/90 bg-zinc-950/70 shadow-2xl backdrop-blur-md">
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-3 h-12 w-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
-          <FolderPlus className="h-6 w-6" />
-        </div>
-        <CardTitle className="text-xl font-bold">Create your first project</CardTitle>
-        <CardDescription>
-          Every project gets an isolated API key, custom CORS domains, and live event pipeline.
+    <Card className="w-full max-w-md border-zinc-800 bg-[#0c0c0e]">
+      <CardHeader className="pb-3 text-left">
+        <CardTitle className="text-lg font-semibold text-zinc-100">
+          Create first project
+        </CardTitle>
+        <CardDescription className="text-xs text-zinc-400">
+          Each project receives an isolated write key and event pipeline.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,7 +68,7 @@ export function CreateFirstProject() {
               placeholder="e.g. My Next.js SaaS"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-colors"
+              className="w-full rounded border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-0 transition-colors"
               autoFocus
             />
           </div>
@@ -82,16 +80,15 @@ export function CreateFirstProject() {
             <input
               id="pdoms"
               type="text"
-              placeholder="e.g. localhost, myapp.com"
+              placeholder="localhost, example.com"
               value={domains}
               onChange={(e) => setDomains(e.target.value)}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-colors"
+              className="w-full rounded border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-0 transition-colors"
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full gap-2 mt-2">
-            <Sparkles className="h-4 w-4 text-emerald-400" />
-            <span>{loading ? 'Setting up workspace...' : 'Initialize Project'}</span>
+          <Button type="submit" disabled={loading} className="w-full text-xs font-medium mt-2">
+            {loading ? 'Setting up...' : 'Create Project'}
           </Button>
         </form>
       </CardContent>

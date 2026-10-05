@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronsUpDown, Plus, FolderKanban } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { createProjectAction } from '@/features/projects/actions';
 import { toast } from 'sonner';
 import type { Project } from '@/lib/db/schema';
@@ -47,7 +47,7 @@ export function ProjectSwitcher({ currentProject, projects }: ProjectSwitcherPro
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectName.trim()) {
-      toast.error('Project name cannot be empty');
+      toast.error('Project name is required');
       return;
     }
 
@@ -69,13 +69,13 @@ export function ProjectSwitcher({ currentProject, projects }: ProjectSwitcherPro
         return;
       }
 
-      toast.success(`Project "${res.project.name}" created!`);
+      toast.success(`Project "${res.project.name}" created`);
       setDialogOpen(false);
       setProjectName('');
       setAllowedDomains('');
       router.push(`/${res.project.slug}`);
     } catch {
-      toast.error('An unexpected error occurred while creating project');
+      toast.error('Failed to create project');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,37 +85,30 @@ export function ProjectSwitcher({ currentProject, projects }: ProjectSwitcherPro
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             role="combobox"
             aria-expanded={open}
-            aria-label="Select a project"
-            className="w-56 justify-between border-zinc-800 bg-zinc-900/60 text-zinc-100 hover:bg-zinc-800/80 hover:text-white"
+            className="flex items-center gap-2 rounded px-2 py-1 text-xs font-medium text-zinc-200 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-colors cursor-pointer select-none active:scale-[0.98]"
           >
-            <div className="flex items-center gap-2 truncate">
-              <FolderKanban className="h-4 w-4 shrink-0 text-emerald-400" />
-              <span className="truncate font-medium">{currentProject.name}</span>
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
+            <span className="max-w-[140px] truncate">{currentProject.name}</span>
+            <ChevronsUpDown className="h-3 w-3 text-zinc-500 shrink-0" />
+          </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuLabel className="text-[11px] font-medium text-zinc-400">
+        <DropdownMenuContent className="w-52">
+          <DropdownMenuLabel className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
             Projects
           </DropdownMenuLabel>
           {projects.map((project) => (
             <DropdownMenuItem
               key={project.id}
               onSelect={() => handleSelect(project.slug)}
-              className="flex items-center justify-between py-2 cursor-pointer"
+              className="flex items-center justify-between text-xs py-1.5 cursor-pointer text-zinc-300 hover:text-white"
             >
-              <div className="flex items-center gap-2 truncate">
-                <span className="truncate text-zinc-200">{project.name}</span>
-              </div>
+              <span className="truncate">{project.name}</span>
               {project.id === currentProject.id && (
-                <Check className="h-4 w-4 text-emerald-400 ml-auto" />
+                <Check className="h-3.5 w-3.5 text-zinc-200 ml-2" />
               )}
             </DropdownMenuItem>
           ))}
@@ -125,57 +118,59 @@ export function ProjectSwitcher({ currentProject, projects }: ProjectSwitcherPro
               setOpen(false);
               setDialogOpen(true);
             }}
-            className="gap-2 text-zinc-200 cursor-pointer font-medium hover:text-white"
+            className="gap-2 text-xs text-zinc-400 hover:text-white cursor-pointer"
           >
-            <Plus className="h-4 w-4 text-emerald-400" />
-            <span>Create Project</span>
+            <Plus className="h-3.5 w-3.5 text-zinc-400" />
+            <span>New project</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800">
           <form onSubmit={handleCreate}>
             <DialogHeader>
-              <DialogTitle>Create new project</DialogTitle>
-              <DialogDescription>
-                Add a new project to start tracking web analytics, funnels, and live events.
+              <DialogTitle className="text-base font-semibold text-zinc-100">
+                New Project
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-400">
+                Create an isolated analytics workspace with a dedicated API key.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label
                   htmlFor="project-name"
                   className="text-xs font-medium text-zinc-300"
                 >
-                  Project Name
+                  Name
                 </label>
                 <input
                   id="project-name"
                   type="text"
-                  placeholder="e.g. Acme Production"
+                  placeholder="e.g. Production App"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-colors"
+                  className="w-full rounded border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-0 transition-colors font-sans"
                   autoFocus
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label
                   htmlFor="project-domains"
                   className="text-xs font-medium text-zinc-300"
                 >
-                  Allowed Domains (Optional, comma-separated)
+                  Allowed Domains (Optional)
                 </label>
                 <input
                   id="project-domains"
                   type="text"
-                  placeholder="localhost, acme.com"
+                  placeholder="localhost, example.com"
                   value={allowedDomains}
                   onChange={(e) => setAllowedDomains(e.target.value)}
-                  className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-colors"
+                  className="w-full rounded border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-0 transition-colors font-mono text-[11px]"
                 />
               </div>
             </div>
@@ -183,14 +178,16 @@ export function ProjectSwitcher({ currentProject, projects }: ProjectSwitcherPro
             <DialogFooter>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
+                size="sm"
                 onClick={() => setDialogOpen(false)}
                 disabled={isSubmitting}
+                className="text-xs"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Project'}
+              <Button type="submit" size="sm" disabled={isSubmitting} className="text-xs font-medium">
+                {isSubmitting ? 'Creating...' : 'Create'}
               </Button>
             </DialogFooter>
           </form>

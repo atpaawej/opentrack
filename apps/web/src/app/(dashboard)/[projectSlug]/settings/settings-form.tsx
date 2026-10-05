@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, Globe, Key, Shield } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 import { updateProjectDomainsAction } from '@/features/projects/actions';
 import { toast } from 'sonner';
 import type { Project } from '@/lib/db/schema';
@@ -23,10 +23,10 @@ export function SettingsForm({ project }: SettingsFormProps) {
     try {
       await navigator.clipboard.writeText(project.apiKey);
       setCopiedKey(true);
-      setTimeout(() => setCopiedKey(false), 2000);
-      toast.success('API key copied to clipboard');
+      setTimeout(() => setCopiedKey(false), 1800);
+      toast.success('API key copied');
     } catch {
-      toast.error('Failed to copy to clipboard');
+      toast.error('Failed to copy');
     }
   };
 
@@ -43,10 +43,10 @@ export function SettingsForm({ project }: SettingsFormProps) {
       if (!res.success) {
         toast.error(res.error || 'Failed to update domains');
       } else {
-        toast.success('Allowed domains updated successfully');
+        toast.success('Allowed domains saved');
       }
     } catch {
-      toast.error('An unexpected error occurred');
+      toast.error('Unexpected error');
     } finally {
       setIsSaving(false);
     }
@@ -55,38 +55,34 @@ export function SettingsForm({ project }: SettingsFormProps) {
   return (
     <div className="space-y-6">
       {/* API Key Card */}
-      <Card className="border-zinc-800/80 bg-zinc-950/40">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Key className="h-4 w-4 text-emerald-400" />
-            <CardTitle>API Credentials</CardTitle>
-          </div>
-          <CardDescription>
-            Use this write-only publishable key in your website tracker or SDK client.
+      <Card className="border-zinc-800/80 bg-zinc-950">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold text-zinc-100">
+            Publishable API Key
+          </CardTitle>
+          <CardDescription className="text-xs text-zinc-400">
+            Client-side write-only key used by tracker scripts and SDKs.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            API Key
-          </label>
+        <CardContent>
           <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900/90 px-3.5 py-2 font-mono text-xs text-emerald-400 selection:bg-zinc-800 truncate">
+            <div className="flex-1 rounded border border-zinc-800 bg-zinc-900/40 px-3 py-1.5 font-mono text-xs text-zinc-200 truncate">
               {project.apiKey}
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={handleCopyKey}
-              className="gap-1.5 border-zinc-800 active:scale-[0.96]"
+              className="gap-1.5 text-xs border-zinc-800 text-zinc-300 hover:text-white"
             >
               {copiedKey ? (
                 <>
-                  <Check className="h-4 w-4 text-emerald-400" />
-                  <span className="text-emerald-400">Copied</span>
+                  <Check className="h-3.5 w-3.5 text-zinc-200" />
+                  <span>Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="h-4 w-4 text-zinc-400" />
+                  <Copy className="h-3.5 w-3.5 text-zinc-400" />
                   <span>Copy</span>
                 </>
               )}
@@ -96,62 +92,54 @@ export function SettingsForm({ project }: SettingsFormProps) {
       </Card>
 
       {/* Allowed Domains Card */}
-      <Card className="border-zinc-800/80 bg-zinc-950/40">
+      <Card className="border-zinc-800/80 bg-zinc-950">
         <form onSubmit={handleSaveDomains}>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-emerald-400" />
-              <CardTitle>CORS & Ingestion Security</CardTitle>
-            </div>
-            <CardDescription>
-              Restrict which website domains are authorized to submit telemetry with this project key. Leave blank to allow all origins.
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-zinc-100">
+              Allowed Domains
+            </CardTitle>
+            <CardDescription className="text-xs text-zinc-400">
+              Limit telemetry ingestion to specific origins. Leave blank to accept events from any origin.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <label
-              htmlFor="domains-input"
-              className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-            >
-              Allowed Origins (Comma separated)
-            </label>
+          <CardContent className="space-y-2">
             <input
               id="domains-input"
               type="text"
               value={domains}
               onChange={(e) => setDomains(e.target.value)}
-              placeholder="e.g. localhost, myapp.com, *.myapp.com"
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-colors"
+              placeholder="e.g. localhost, app.example.com"
+              className="w-full rounded border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-0 transition-colors"
             />
           </CardContent>
-          <CardFooter className="border-t border-zinc-800/60 pt-4 flex justify-end">
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Saving Changes...' : 'Save Settings'}
+          <CardFooter className="border-t border-zinc-800/60 pt-3 flex justify-end">
+            <Button type="submit" size="sm" disabled={isSaving} className="text-xs font-medium">
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </CardFooter>
         </form>
       </Card>
 
       {/* Project Metadata Card */}
-      <Card className="border-zinc-800/80 bg-zinc-950/40">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-zinc-400" />
-            <CardTitle>Metadata</CardTitle>
-          </div>
+      <Card className="border-zinc-800/80 bg-zinc-950">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold text-zinc-100">
+            Project Metadata
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-zinc-400">
-          <div className="flex justify-between py-1 border-b border-zinc-800/50">
-            <span>Project Slug</span>
+        <CardContent className="space-y-2 text-xs text-zinc-400">
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/40">
+            <span>Slug</span>
             <span className="font-mono text-zinc-200">{project.slug}</span>
           </div>
-          <div className="flex justify-between py-1 border-b border-zinc-800/50">
-            <span>Created At</span>
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/40">
+            <span>Created</span>
             <span className="text-zinc-200">{new Date(project.createdAt).toLocaleDateString()}</span>
           </div>
-          <div className="flex justify-between py-1">
-            <span>Ownership</span>
+          <div className="flex justify-between py-1.5">
+            <span>Scope</span>
             <span className="text-zinc-200">
-              {project.clerkOrgId ? `Organization (${project.clerkOrgId})` : 'Personal User'}
+              {project.clerkOrgId ? `Organization (${project.clerkOrgId})` : 'Personal Workspace'}
             </span>
           </div>
         </CardContent>

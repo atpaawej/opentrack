@@ -1,5 +1,5 @@
 import { Effect, Exit, Cause } from 'effect';
-import { ingestEvent } from '@/features/ingestion/service';
+import { ingestBatch } from '@/features/ingestion/service';
 import {
   PayloadValidationError,
   InvalidApiKeyError,
@@ -44,9 +44,9 @@ export async function POST(request: Request) {
     request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
     undefined;
 
-  // Execute Effect workflow passing request headers for UA, Geo, referrer & domain checks
+  // Execute Effect batch workflow
   const exit = await Effect.runPromiseExit(
-    ingestEvent(body, {
+    ingestBatch(body, {
       clientIp,
       headers: request.headers,
       apiKey: apiKeyHeader,
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
   if (Exit.isSuccess(exit)) {
     return Response.json(
-      { status: 'ok', eventId: exit.value.id },
+      { status: 'ok', processed: exit.value.length, count: exit.value.length },
       { status: 200, headers: corsHeaders }
     );
   }
@@ -97,15 +97,15 @@ export async function POST(request: Request) {
     }
 
     if (error._tag === 'DatabaseWriteError') {
-      console.error('[capture] Database write error:', error.message, error.cause);
+      console.error('[batch] Database write error:', error.message, error.cause);
       return Response.json(
-        { error: 'Failed to persist event' },
+        { error: 'Failed to persist events' },
         { status: 500, headers: corsHeaders }
       );
     }
   }
 
-  console.error('[capture] Unexpected pipeline defect:', Cause.pretty(exit.cause));
+  console.error('[batch] Unexpected pipeline defect:', Cause.pretty(exit.cause));
   return Response.json(
     { error: 'Internal Server Error' },
     { status: 500, headers: corsHeaders }

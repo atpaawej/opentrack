@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter @opentrack/web run build && pnpm --filter web run build",
-    "test": "pnpm --filter web test",
+    "test": "pnpm --filter @opentrack/web test && pnpm --filter web test",
     "test:smoke": "tsx --tsconfig apps/web/tsconfig.json scripts/smoke-test-spine.ts",
     "lint": "pnpm --filter web lint",
     "env:sync": "node scripts/env-sync.mjs",

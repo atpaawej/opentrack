@@ -6,7 +6,7 @@
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter @opentrack/web run build && pnpm --filter web run build",
     "test": "pnpm --filter web test",
-    "test:smoke": "tsx scripts/smoke-test-spine.ts",
+    "test:smoke": "tsx --tsconfig apps/web/tsconfig.json scripts/smoke-test-spine.ts",
     "lint": "pnpm --filter web lint",
     "env:sync": "node scripts/env-sync.mjs",
     "env:check": "node scripts/env-sync.mjs --check",
@@ -16,6 +16,10 @@
     "db:list": "pnpm --filter web db:list"
   },
   "devDependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.40.1",
+    "effect": "^3.22.2",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },

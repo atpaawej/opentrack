@@ -8,6 +8,18 @@ importers:
 
   .:
     devDependencies:
+      '@neondatabase/serverless':
+        specifier: ^0.10.4
+        version: 0.10.4
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
+      drizzle-orm:
+        specifier: ^0.40.1
+        version: 0.40.1(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)(gel@2.2.1)
+      effect:
+        specifier: ^3.22.2
+        version: 3.22.2
       tsx:
         specifier: ^4.19.3
         version: 4.23.15

@@ -1,35 +1,73 @@
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
+import { Effect, Exit } from 'effect';
+import { Badge } from '@/components/ui/badge';
+import { getProjectBySlug } from '@/features/projects/service';
+import { listPersons } from '@/features/persons/service';
+import { PersonList } from '@/features/persons/components/person-list';
+import type { ListPersonsResult } from '@/features/persons/types';
 
 interface PageProps {
   params: Promise<{ projectSlug: string }>;
+  searchParams?: Promise<{ search?: string; page?: string }>;
 }
 
-export default async function PersonsPage({ params }: PageProps) {
+export default async function PersonsPage({ params, searchParams }: PageProps) {
   const { projectSlug } = await params;
+  const { userId, orgId } = await auth();
+
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
+  const projectExit = await Effect.runPromiseExit(
+    getProjectBySlug(projectSlug, { clerkUserId: userId, clerkOrgId: orgId })
+  );
+
+  if (Exit.isFailure(projectExit)) {
+    notFound();
+  }
+
+  const project = projectExit.value;
+
+  const sp = searchParams ? await searchParams : {};
+  const search = sp.search || undefined;
+  const pageNum = parseInt(sp.page || '1', 10) || 1;
+  const limit = 20;
+  const offset = (pageNum - 1) * limit;
+
+  const personsExit = await Effect.runPromiseExit(
+    listPersons(project.id, { search, limit, offset })
+  );
+
+  const initialData: ListPersonsResult = Exit.isSuccess(personsExit)
+    ? personsExit.value
+    : { persons: [], total: 0, limit, offset };
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-zinc-800/60 pb-5">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Persons</h1>
-        <p className="mt-1 text-xs text-zinc-400">
-          User profiles and activity timelines for {projectSlug}.
-        </p>
+      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-5">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
+              Persons &amp; Users
+            </h1>
+            <Badge variant="outline" className="border-zinc-800 bg-zinc-900/60 text-zinc-300 font-mono">
+              Directory
+            </Badge>
+          </div>
+          <p className="mt-1 text-xs text-zinc-400">
+            Explore identified users, user traits, and activity history for{' '}
+            <span className="font-medium text-zinc-300">{project.name}</span>.
+          </p>
+        </div>
       </div>
 
-      <Card className="border-zinc-800/80 bg-zinc-950">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-zinc-100">User Identification</CardTitle>
-          <CardDescription className="text-xs text-zinc-400">
-            User timeline inspection is scheduled for Plan 0005.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800/80 rounded bg-zinc-900/20">
-            <p className="text-xs font-medium text-zinc-400">User identification module ready</p>
-          </div>
-        </CardContent>
-      </Card>
+      <PersonList
+        projectSlug={projectSlug}
+        initialData={initialData}
+      />
     </div>
   );
 }

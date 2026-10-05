@@ -1,7 +1,12 @@
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Radio } from 'lucide-react';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
+import { Effect, Exit } from 'effect';
 import { Badge } from '@/components/ui/badge';
+import { getProjectBySlug } from '@/features/projects/service';
+import { getLiveEvents } from '@/features/live-stream/service';
+import { LiveStreamFeed } from '@/features/live-stream/components/live-stream-feed';
+import type { Event } from '@/lib/db/schema';
 
 interface PageProps {
   params: Promise<{ projectSlug: string }>;
@@ -9,6 +14,32 @@ interface PageProps {
 
 export default async function LiveStreamPage({ params }: PageProps) {
   const { projectSlug } = await params;
+  const { userId, orgId } = await auth();
+
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
+  // Fetch project details
+  const projectExit = await Effect.runPromiseExit(
+    getProjectBySlug(projectSlug, { clerkUserId: userId, clerkOrgId: orgId })
+  );
+
+  if (Exit.isFailure(projectExit)) {
+    notFound();
+  }
+
+  const project = projectExit.value;
+
+  // Initial server-side query of live events
+  const eventsExit = await Effect.runPromiseExit(
+    getLiveEvents({
+      projectId: project.id,
+      limit: 50,
+    })
+  );
+
+  const initialEvents: Event[] = Exit.isSuccess(eventsExit) ? eventsExit.value : [];
 
   return (
     <div className="space-y-6">
@@ -18,35 +49,21 @@ export default async function LiveStreamPage({ params }: PageProps) {
             <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
               Live Stream
             </h1>
-            <Badge variant="outline">SSE Channel</Badge>
+            <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+              Active Stream
+            </Badge>
           </div>
           <p className="mt-1 text-xs text-zinc-400">
-            Real-time telemetry event pipeline for {projectSlug}.
+            Real-time telemetry event stream for{' '}
+            <span className="font-medium text-zinc-300">{project.name}</span>.
           </p>
         </div>
       </div>
 
-      <Card className="border-zinc-800/80 bg-zinc-950">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-zinc-100">
-            Live Ingestion Stream
-          </CardTitle>
-          <CardDescription className="text-xs text-zinc-400">
-            Real-time event inspector will render here in Plan 0003.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-zinc-800/80 rounded bg-zinc-900/20">
-            <Radio className="h-5 w-5 text-zinc-400 mb-2" />
-            <p className="text-xs font-medium text-zinc-300">
-              Listening for events
-            </p>
-            <p className="text-[11px] text-zinc-500 mt-1 max-w-sm">
-              Incoming telemetry to <code className="text-zinc-400 font-mono">/api/v1/capture</code> will stream live.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <LiveStreamFeed
+        projectSlug={projectSlug}
+        initialEvents={initialEvents}
+      />
     </div>
   );
 }

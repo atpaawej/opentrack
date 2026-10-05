@@ -18,6 +18,7 @@ export default defineConfig([
     format: ['iife'],
     globalName: 'opentrack',
     minify: true,
+    treeshake: true,
     outExtension() {
       return { js: '.min.js' };
     },

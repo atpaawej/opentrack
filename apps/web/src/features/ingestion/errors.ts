@@ -10,6 +10,12 @@ export class InvalidApiKeyError extends Data.TaggedError('InvalidApiKeyError')<{
   readonly message: string;
 }> {}
 
+export class DomainNotAllowedError extends Data.TaggedError('DomainNotAllowedError')<{
+  readonly origin: string;
+  readonly allowedDomains: string[];
+  readonly message: string;
+}> {}
+
 export class DatabaseWriteError extends Data.TaggedError('DatabaseWriteError')<{
   readonly message: string;
   readonly cause?: unknown;
@@ -18,4 +24,5 @@ export class DatabaseWriteError extends Data.TaggedError('DatabaseWriteError')<{
 export type IngestionError =
   | PayloadValidationError
   | InvalidApiKeyError
+  | DomainNotAllowedError
   | DatabaseWriteError;

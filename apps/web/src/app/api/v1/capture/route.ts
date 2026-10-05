@@ -3,13 +3,14 @@ import { ingestEvent } from '@/features/ingestion/service';
 import {
   PayloadValidationError,
   InvalidApiKeyError,
+  DomainNotAllowedError,
   DatabaseWriteError,
 } from '@/features/ingestion/errors';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-OpenTrack-Key',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -38,8 +39,19 @@ export async function POST(request: Request) {
     request.headers.get('x-real-ip') ||
     undefined;
 
-  // Execute Effect workflow
-  const exit = await Effect.runPromiseExit(ingestEvent(body, clientIp));
+  const apiKeyHeader =
+    request.headers.get('x-opentrack-key') ||
+    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+    undefined;
+
+  // Execute Effect workflow passing request headers for UA, Geo, referrer & domain checks
+  const exit = await Effect.runPromiseExit(
+    ingestEvent(body, {
+      clientIp,
+      headers: request.headers,
+      apiKey: apiKeyHeader,
+    })
+  );
 
   if (Exit.isSuccess(exit)) {
     return Response.json(
@@ -71,6 +83,16 @@ export async function POST(request: Request) {
           message: error.message,
         },
         { status: 401, headers: corsHeaders }
+      );
+    }
+
+    if (error._tag === 'DomainNotAllowedError') {
+      return Response.json(
+        {
+          error: 'Domain not allowed',
+          message: error.message,
+        },
+        { status: 403, headers: corsHeaders }
       );
     }
 

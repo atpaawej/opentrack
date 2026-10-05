@@ -15,6 +15,13 @@
       "when": 1791222198445,
       "tag": "0001_long_stephen_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791228598946,
+      "tag": "0002_misty_ink",
+      "breakpoints": true
     }
   ]
 }

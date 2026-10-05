@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { Effect, Schedule, and } from 'effect';
+import { Effect, Schedule } from 'effect';
 import { Schema } from '@effect/schema';
 import { eq, and as drizzleAnd } from 'drizzle-orm';
 import { db } from '@/lib/db';
@@ -183,11 +183,13 @@ export function validateBatchPayload(
     let apiKey: string | undefined;
     let batch: CapturePayload[];
 
-    if (Array.isArray(decoded)) {
-      batch = decoded;
+    if (decoded && typeof decoded === 'object' && 'batch' in decoded) {
+      apiKey = (decoded as { api_key?: string; batch: CapturePayload[] }).api_key;
+      batch = [...(decoded as { api_key?: string; batch: CapturePayload[] }).batch];
+    } else if (Array.isArray(decoded)) {
+      batch = [...(decoded as CapturePayload[])];
     } else {
-      apiKey = decoded.api_key;
-      batch = decoded.batch;
+      batch = [];
     }
 
     if (batch.length === 0) {

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { Effect, Exit } from 'effect';
 import { getProjectBySlug, checkProjectHasEvents } from '@/features/projects/service';
+import { getAllAnalyticsData } from '@/features/web-analytics/service';
+import { AnalyticsDashboard } from '@/features/web-analytics/components/analytics-dashboard';
 import { SetupGuide } from '@/components/dashboard/setup-guide';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +34,42 @@ export default async function ProjectOverviewPage({ params }: ProjectPageProps) 
   const hasEventsExit = await Effect.runPromiseExit(checkProjectHasEvents(project.id));
   const hasEvents = Exit.isSuccess(hasEventsExit) ? hasEventsExit.value : false;
 
+  // If project has events, show comprehensive web analytics overview
+  if (hasEvents) {
+    const analyticsExit = await Effect.runPromiseExit(
+      getAllAnalyticsData(project.id, '30d')
+    );
+
+    const initialData = Exit.isSuccess(analyticsExit)
+      ? analyticsExit.value
+      : {
+          kpis: {
+            uniqueVisitors: { value: 0, previousValue: 0, changePercentage: 0 },
+            totalPageviews: { value: 0, previousValue: 0, changePercentage: 0 },
+            totalSessions: { value: 0, previousValue: 0, changePercentage: 0 },
+            bounceRate: { value: 0, previousValue: 0, changePercentage: 0 },
+            avgSessionDuration: { value: 0, previousValue: 0, changePercentage: 0 },
+          },
+          timeSeries: [],
+          breakdowns: {
+            pages: [],
+            referrers: [],
+            utm: [],
+            countries: [],
+            browsers: [],
+            os: [],
+            devices: [],
+          },
+          dateRange: '30d' as const,
+          granularity: 'day' as const,
+          from: new Date(Date.now() - 30 * 86400000).toISOString(),
+          to: new Date().toISOString(),
+        };
+
+    return <AnalyticsDashboard project={project} initialData={initialData} />;
+  }
+
+  // If 0 events logged, display setup guide & ingestion diagnostics
   return (
     <div className="space-y-6">
       {/* Top Project Bar */}
@@ -41,9 +79,7 @@ export default async function ProjectOverviewPage({ params }: ProjectPageProps) 
             {project.name}
           </h1>
           <Badge variant="outline">{project.slug}</Badge>
-          <Badge variant={hasEvents ? 'contrast' : 'secondary'}>
-            {hasEvents ? 'Active' : 'Awaiting data'}
-          </Badge>
+          <Badge variant="secondary">Awaiting data</Badge>
         </div>
 
         <div className="text-xs text-zinc-400 font-mono">
@@ -52,7 +88,7 @@ export default async function ProjectOverviewPage({ params }: ProjectPageProps) 
       </div>
 
       {/* Main Setup Guide & Telemetry Status */}
-      <SetupGuide project={project} initialHasEvents={hasEvents} />
+      <SetupGuide project={project} initialHasEvents={false} />
 
       {/* Quick Diagnostics & Configuration Grid */}
       <div className="grid gap-4 md:grid-cols-3">

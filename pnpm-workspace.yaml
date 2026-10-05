@@ -3,7 +3,9 @@ packages:
   - 'packages/*'
 
 allowBuilds:
+  '@clerk/shared': true
   esbuild: true
 
 onlyBuiltDependencies:
   - esbuild
+  - '@clerk/shared'

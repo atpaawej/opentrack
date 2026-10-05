@@ -8,6 +8,13 @@
       "when": 1791219705185,
       "tag": "0000_legal_charles_xavier",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791222198445,
+      "tag": "0001_long_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

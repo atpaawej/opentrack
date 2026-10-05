@@ -1,9 +1,25 @@
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'OpenTrack — Developer-First Product Analytics',
-  description: 'Open-source, developer-first product analytics platform',
+  description: 'Minimal, high-performance product analytics platform for developers.',
 };
 
 export default function RootLayout({
@@ -12,10 +28,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased bg-zinc-950 text-zinc-100 min-h-screen">
-        {children}
-      </body>
-    </html>
+    <ClerkProvider appearance={dark}>
+      <html
+        lang="en"
+        className={`dark ${geistSans.variable} ${geistMono.variable}`}
+      >
+        <body className="antialiased bg-[#09090b] text-[#f4f4f5] font-sans selection:bg-zinc-800 selection:text-white min-h-screen">
+          {children}
+          <Toaster position="bottom-right" />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

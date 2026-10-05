@@ -1,0 +1,23 @@
+{
+  "name": "opentrack-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter @opentrack/web run build && pnpm --filter web run build",
+    "test": "pnpm --filter web test",
+    "test:smoke": "tsx scripts/smoke-test-spine.ts",
+    "lint": "pnpm --filter web lint",
+    "env:sync": "node scripts/env-sync.mjs",
+    "env:check": "node scripts/env-sync.mjs --check",
+    "db:generate": "pnpm --filter web db:generate",
+    "db:migrate": "pnpm --filter web db:migrate",
+    "db:push": "pnpm --filter web db:push",
+    "db:list": "pnpm --filter web db:list"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "packageManager": "pnpm@11.17.0"
+}

@@ -84,9 +84,9 @@ export function resolveDateRange(
   return { from, to, previousFrom, previousTo, defaultGranularity: 'day' };
 }
 
-export function calculateChangePercentage(current: number, previous: number): number {
+export function calculateChangePercentage(current: number, previous: number): number | null {
   if (previous === 0) {
-    return current > 0 ? 100 : 0;
+    return current > 0 ? null : 0;
   }
   const pct = ((current - previous) / previous) * 100;
   return Math.round(pct * 10) / 10;
@@ -107,7 +107,7 @@ async function queryKpiWindow(
 ): Promise<WindowMetrics> {
   const summaryRes = await db
     .select({
-      uniqueVisitors: sql<number>`count(distinct coalesce(${events.distinctId}, ${events.ipHash}))::int`,
+      uniqueVisitors: sql<number>`count(distinct ${events.distinctId})::int`,
       totalPageviews: sql<number>`count(case when ${events.eventName} = '$pageview' then 1 end)::int`,
       totalSessions: sql<number>`count(distinct ${events.sessionId})::int`,
     })
@@ -235,8 +235,27 @@ export function getKpiMetrics(
   });
 }
 
+// Traffic ranges and buckets are UTC, regardless of the database connection's timezone.
+function startOfUtcBucket(date: Date, granularity: Granularity): Date {
+  const bucket = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  if (granularity === 'hour') bucket.setUTCHours(date.getUTCHours());
+  if (granularity === 'week') bucket.setUTCDate(bucket.getUTCDate() - ((bucket.getUTCDay() + 6) % 7));
+  if (granularity === 'month') bucket.setUTCDate(1);
+  return bucket;
+}
+
+function nextUtcBucket(date: Date, granularity: Granularity): Date {
+  const next = new Date(date);
+  if (granularity === 'hour') next.setUTCHours(next.getUTCHours() + 1);
+  if (granularity === 'day') next.setUTCDate(next.getUTCDate() + 1);
+  if (granularity === 'week') next.setUTCDate(next.getUTCDate() + 7);
+  if (granularity === 'month') next.setUTCMonth(next.getUTCMonth() + 1);
+  return next;
+}
+
 /**
- * Calculates time-series points grouped by hour, day, week or month
+ * Calculates time-series points grouped by UTC hour, day, ISO week or month.
+ * An empty range returns []; otherwise missing buckets within the range are zero.
  */
 export function getTimeSeriesMetrics(
   projectId: string,
@@ -252,11 +271,12 @@ export function getTimeSeriesMetrics(
     const rows = yield* Effect.tryPromise({
       try: async () => {
         const truncSql = sql.raw(`'${activeGranularity}'`);
+        const utcBucket = sql`date_trunc(${truncSql}, ${events.timestamp} at time zone 'UTC') at time zone 'UTC'`;
         return await db
           .select({
-            bucket: sql<string>`date_trunc(${truncSql}, ${events.timestamp})::text`,
+            bucket: sql<string>`${utcBucket}::text`,
             pageviews: sql<number>`count(case when ${events.eventName} = '$pageview' then 1 end)::int`,
-            visitors: sql<number>`count(distinct coalesce(${events.distinctId}, ${events.ipHash}))::int`,
+            visitors: sql<number>`count(distinct ${events.distinctId})::int`,
             sessions: sql<number>`count(distinct coalesce(${events.sessionId}, ${events.distinctId}))::int`,
           })
           .from(events)
@@ -267,8 +287,8 @@ export function getTimeSeriesMetrics(
               lte(events.timestamp, resolved.to)
             )
           )
-          .groupBy(sql`date_trunc(${truncSql}, ${events.timestamp})`)
-          .orderBy(sql`date_trunc(${truncSql}, ${events.timestamp}) asc`);
+          .groupBy(utcBucket)
+          .orderBy(sql`${utcBucket} asc`);
       },
       catch: (err) =>
         new WebAnalyticsError({
@@ -277,19 +297,32 @@ export function getTimeSeriesMetrics(
         }),
     });
 
-    const points: TimeSeriesPoint[] = rows.map((r) => ({
-      timestamp: new Date(r.bucket).toISOString(),
-      pageviews: r.pageviews || 0,
-      visitors: r.visitors || 0,
-      sessions: r.sessions || 0,
-    }));
+    if (rows.length === 0) return [];
+
+    const byBucket = new Map(rows.map((row) => [new Date(row.bucket).toISOString(), row]));
+    const points: TimeSeriesPoint[] = [];
+    for (
+      let bucket = startOfUtcBucket(resolved.from, activeGranularity);
+      bucket <= resolved.to;
+      bucket = nextUtcBucket(bucket, activeGranularity)
+    ) {
+      const timestamp = bucket.toISOString();
+      const row = byBucket.get(timestamp);
+      points.push({
+        timestamp,
+        pageviews: row?.pageviews ?? 0,
+        visitors: row?.visitors ?? 0,
+        sessions: row?.sessions ?? 0,
+      });
+    }
 
     return points;
   });
 }
 
 /**
- * Computes breakdown metrics for dimensions (pages, referrers, utm, countries, browsers, os, devices)
+ * Pages rank $pageview events; other dimensions rank all recorded events (event context,
+ * not first-touch attribution). Percentages use the full eligible event count, not top 10.
  */
 export function getBreakdownMetrics(
   projectId: string,
@@ -333,20 +366,23 @@ export function getBreakdownMetrics(
           .select({
             name: sql<string>`${nameExpr}::text`,
             value: sql<number>`count(*)::int`,
+            // Window total runs before LIMIT: shares include every eligible event.
+            total: sql<number>`sum(count(*)) over()::int`,
           })
           .from(events)
           .where(
             and(
               eq(events.projectId, projectId),
               gte(events.timestamp, from),
-              lte(events.timestamp, to)
+              lte(events.timestamp, to),
+              dimension === 'pages' ? eq(events.eventName, '$pageview') : undefined
             )
           )
           .groupBy(nameExpr)
           .orderBy(sql`count(*) desc`)
           .limit(10);
 
-        const totalValue = rows.reduce((acc, r) => acc + (r.value || 0), 0);
+        const totalValue = rows[0]?.total ?? 0;
 
         const items: BreakdownItem[] = rows.map((r) => ({
           name: r.name,
@@ -368,6 +404,37 @@ export function getBreakdownMetrics(
   });
 }
 
+/** Custom actions explicitly captured by an app (automatic $ events are excluded). */
+export function getTopEvents(
+  projectId: string,
+  dateRange: DateRangeKey,
+  customFrom?: string | Date,
+  customTo?: string | Date
+): Effect.Effect<BreakdownItem[], WebAnalyticsError> {
+  return Effect.tryPromise({
+    try: async () => {
+      const { from, to } = resolveDateRange(dateRange, customFrom, customTo);
+      const rows = await db.select({
+        name: events.eventName,
+        value: sql<number>`count(*)::int`,
+        total: sql<number>`sum(count(*)) over()::int`,
+      }).from(events).where(and(
+        eq(events.projectId, projectId),
+        gte(events.timestamp, from),
+        lte(events.timestamp, to),
+        sql`${events.eventName} not like '$%'`
+      )).groupBy(events.eventName).orderBy(sql`count(*) desc`, events.eventName).limit(10);
+      const total = rows[0]?.total ?? 0;
+      return rows.map((row) => ({
+        name: row.name,
+        value: row.value,
+        percentage: total ? Math.round(row.value / total * 1000) / 10 : 0,
+      }));
+    },
+    catch: (cause) => new WebAnalyticsError({ message: 'Failed to query app events', cause }),
+  });
+}
+
 /**
  * Aggregates all web analytics metrics (KPIs, time-series, and breakdowns) in a single workflow
  */
@@ -385,6 +452,7 @@ export function getAllAnalyticsData(
     const [
       kpis,
       timeSeries,
+      appEvents,
       pages,
       referrers,
       utm,
@@ -395,6 +463,7 @@ export function getAllAnalyticsData(
     ] = yield* Effect.all([
       getKpiMetrics(projectId, dateRange, customFrom, customTo),
       getTimeSeriesMetrics(projectId, dateRange, activeGranularity, customFrom, customTo),
+      getTopEvents(projectId, dateRange, customFrom, customTo),
       getBreakdownMetrics(projectId, dateRange, 'pages', customFrom, customTo),
       getBreakdownMetrics(projectId, dateRange, 'referrers', customFrom, customTo),
       getBreakdownMetrics(projectId, dateRange, 'utm', customFrom, customTo),
@@ -408,6 +477,7 @@ export function getAllAnalyticsData(
       kpis,
       timeSeries,
       breakdowns: {
+        events: appEvents,
         pages,
         referrers,
         utm,
@@ -418,6 +488,7 @@ export function getAllAnalyticsData(
       },
       dateRange,
       granularity: activeGranularity,
+      timezone: 'UTC',
       from: resolved.from.toISOString(),
       to: resolved.to.toISOString(),
     };

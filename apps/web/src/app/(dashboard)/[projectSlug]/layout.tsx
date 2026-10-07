@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { Effect, Exit } from 'effect';
 import { Header } from '@/components/dashboard/header';
 import { Sidebar } from '@/components/dashboard/sidebar';
+import { RouteTransition } from '@/components/dashboard/route-transition';
 import { listUserProjects, getProjectBySlug } from '@/features/projects/service';
 
 interface ProjectLayoutProps {
@@ -36,13 +37,13 @@ export default async function ProjectDashboardLayout({
   const projects = Exit.isSuccess(projectsExit) ? projectsExit.value : [currentProject];
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <Header currentProject={currentProject} projects={projects} />
-      <div className="flex flex-1">
+      <div className="flex min-w-0 flex-1">
         <Sidebar projectSlug={projectSlug} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main id="main-content" className="min-w-0 flex-1 px-4 py-6 ~sm/lg:~px-4/8">
           <div className="mx-auto max-w-6xl space-y-6">
-            {children}
+            <RouteTransition>{children}</RouteTransition>
           </div>
         </main>
       </div>

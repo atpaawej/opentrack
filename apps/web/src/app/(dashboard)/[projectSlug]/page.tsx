@@ -1,4 +1,4 @@
-import * as React from 'react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { Effect, Exit } from 'effect';
@@ -6,8 +6,7 @@ import { getProjectBySlug, checkProjectHasEvents } from '@/features/projects/ser
 import { getAllAnalyticsData } from '@/features/web-analytics/service';
 import { AnalyticsDashboard } from '@/features/web-analytics/components/analytics-dashboard';
 import { SetupGuide } from '@/components/dashboard/setup-guide';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface ProjectPageProps {
   params: Promise<{ projectSlug: string }>;
@@ -16,134 +15,38 @@ interface ProjectPageProps {
 export default async function ProjectOverviewPage({ params }: ProjectPageProps) {
   const { projectSlug } = await params;
   const { userId, orgId } = await auth();
+  if (!userId) notFound();
 
-  if (!userId) {
-    notFound();
-  }
-
-  const projectExit = await Effect.runPromiseExit(
-    getProjectBySlug(projectSlug, { clerkUserId: userId, clerkOrgId: orgId })
-  );
-
-  if (Exit.isFailure(projectExit)) {
-    notFound();
-  }
-
+  const projectExit = await Effect.runPromiseExit(getProjectBySlug(projectSlug, { clerkUserId: userId, clerkOrgId: orgId }));
+  if (Exit.isFailure(projectExit)) notFound();
   const project = projectExit.value;
 
+  const retry = (
+    <div role="alert" className="space-y-3 rounded-xl border border-edge bg-surface p-6">
+      <h1 className="text-lg font-semibold text-foreground">Analytics unavailable</h1>
+      <p className="text-sm text-muted">We couldn’t load activity for {project.name}. Your data has not been changed. Try again.</p>
+      <Button asChild variant="outline"><a href={`/${encodeURIComponent(projectSlug)}`}>Try again</a></Button>
+    </div>
+  );
+
   const hasEventsExit = await Effect.runPromiseExit(checkProjectHasEvents(project.id));
-  const hasEvents = Exit.isSuccess(hasEventsExit) ? hasEventsExit.value : false;
-
-  // If project has events, show comprehensive web analytics overview
-  if (hasEvents) {
-    const analyticsExit = await Effect.runPromiseExit(
-      getAllAnalyticsData(project.id, '30d')
-    );
-
-    const initialData = Exit.isSuccess(analyticsExit)
-      ? analyticsExit.value
-      : {
-          kpis: {
-            uniqueVisitors: { value: 0, previousValue: 0, changePercentage: 0 },
-            totalPageviews: { value: 0, previousValue: 0, changePercentage: 0 },
-            totalSessions: { value: 0, previousValue: 0, changePercentage: 0 },
-            bounceRate: { value: 0, previousValue: 0, changePercentage: 0 },
-            avgSessionDuration: { value: 0, previousValue: 0, changePercentage: 0 },
-          },
-          timeSeries: [],
-          breakdowns: {
-            pages: [],
-            referrers: [],
-            utm: [],
-            countries: [],
-            browsers: [],
-            os: [],
-            devices: [],
-          },
-          dateRange: '30d' as const,
-          granularity: 'day' as const,
-          from: new Date(Date.now() - 30 * 86400000).toISOString(),
-          to: new Date().toISOString(),
-        };
-
-    return <AnalyticsDashboard project={project} initialData={initialData} />;
+  if (Exit.isFailure(hasEventsExit)) return retry;
+  if (hasEventsExit.value) {
+    const analyticsExit = await Effect.runPromiseExit(getAllAnalyticsData(project.id, '30d'));
+    if (Exit.isFailure(analyticsExit)) return retry;
+    return <AnalyticsDashboard project={project} initialData={analyticsExit.value} />;
   }
 
-  // If 0 events logged, display setup guide & ingestion diagnostics
   return (
     <div className="space-y-6">
-      {/* Top Project Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 border-b border-zinc-800/60 pb-5">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
-            {project.name}
-          </h1>
-          <Badge variant="outline">{project.slug}</Badge>
-          <Badge variant="secondary">Awaiting data</Badge>
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-edge pb-5">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Connect {project.name}</h1>
+          <p className="mt-1 text-sm text-muted">No events have arrived yet. Add the tracker, then open your app to send the first pageview.</p>
         </div>
-
-        <div className="text-xs text-zinc-400 font-mono">
-          {project.clerkOrgId ? 'Organization' : 'Personal'}
-        </div>
+        <Button variant="ghost" asChild size="sm"><Link href={`/${project.slug}/settings`}>Tracking settings</Link></Button>
       </div>
-
-      {/* Main Setup Guide & Telemetry Status */}
       <SetupGuide project={project} initialHasEvents={false} />
-
-      {/* Quick Diagnostics & Configuration Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-zinc-800/80 bg-zinc-950">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-              Endpoint
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-mono text-xs text-zinc-200">
-              /api/v1/capture
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              Public ingestion receiver
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-800/80 bg-zinc-950">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-              CORS Policy
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs font-medium text-zinc-200 truncate">
-              {project.allowedDomains && project.allowedDomains.length > 0
-                ? `${project.allowedDomains.length} domains permitted`
-                : 'All origins (*)'}
-            </div>
-            <p className="text-xs text-zinc-400 mt-1 truncate">
-              {project.allowedDomains && project.allowedDomains.length > 0
-                ? project.allowedDomains.join(', ')
-                : 'Unrestricted client origins'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-800/80 bg-zinc-950">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-              Project Identifier
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs font-mono text-zinc-300 truncate">
-              {project.id}
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              UUID database reference
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

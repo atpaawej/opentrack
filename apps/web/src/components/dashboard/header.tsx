@@ -2,10 +2,13 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { UserButton, OrganizationSwitcher } from '@clerk/nextjs';
-import { ProjectSwitcher } from './project-switcher';
-import { Settings } from 'lucide-react';
+import { Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { DashboardNavigation } from './sidebar';
+import { ProjectSwitcher } from './project-switcher';
 import type { Project } from '@/lib/db/schema';
 
 interface HeaderProps {
@@ -14,63 +17,63 @@ interface HeaderProps {
 }
 
 export function Header({ currentProject, projects }: HeaderProps) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const pathname = usePathname();
+
+  React.useEffect(() => setMenuOpen(false), [pathname]);
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-800/60 bg-[#09090b]/90 backdrop-blur-md">
-      <div className="flex h-12 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+    <header className="dashboard-header sticky top-0 z-40 w-full border-b border-edge/60 bg-background/95 backdrop-blur-md">
+      <div className="flex min-h-14 items-center justify-between gap-2 ~px-4/8">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link
             href="/"
-            className="flex items-center gap-2 text-zinc-100 hover:text-white transition-opacity group"
+            aria-label="OpenTrack home"
+            className="flex min-h-10 shrink-0 items-center gap-2 rounded-md text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
           >
-            {/* Geometric minimal OpenTrack logomark */}
-            <div className="h-6 w-6 rounded bg-zinc-100 text-zinc-950 flex items-center justify-center font-mono font-bold text-xs">
-              OT
-            </div>
-            <span className="font-semibold text-sm tracking-tight hidden sm:inline-block">
-              OpenTrack
-            </span>
+            <span className="flex h-7 w-7 items-center justify-center rounded bg-foreground font-mono text-xs font-semibold text-background" aria-hidden="true">OT</span>
+            <span className="hidden font-semibold tracking-tight ~text-sm/base sm:inline">OpenTrack</span>
           </Link>
-
-          <span className="text-zinc-700 text-sm hidden sm:inline select-none">/</span>
-
-          <ProjectSwitcher
-            currentProject={currentProject}
-            projects={projects}
-          />
+          <span aria-hidden="true" className="hidden text-muted sm:inline">/</span>
+          <ProjectSwitcher currentProject={currentProject} projects={projects} />
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="h-8 w-8 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850"
-          >
-            <Link href={`/${currentProject.slug}/settings`} title="Project Settings">
-              <Settings className="h-3.5 w-3.5" />
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="icon" asChild className="hidden text-muted md:inline-flex" >
+            <Link href={`/${currentProject.slug}/settings`} aria-label="Project settings">
+              <Settings aria-hidden="true" className="h-4 w-4" />
             </Link>
           </Button>
-
-          <div className="h-3.5 w-px bg-zinc-800" />
-
-          <div className="flex items-center gap-2.5">
+          <div className="hidden h-5 w-px bg-edge md:block" aria-hidden="true" />
+          <div className="hidden md:flex">
             <OrganizationSwitcher
-              appearance={{
-                elements: {
-                  rootBox: 'flex items-center',
-                  organizationSwitcherTrigger:
-                    'px-2 py-1 text-xs text-zinc-400 hover:text-zinc-100 rounded hover:bg-zinc-900 border border-zinc-800/80 transition-colors',
-                },
-              }}
-            />
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'h-7 w-7 ring-1 ring-zinc-800 hover:ring-zinc-600 transition-all',
-                },
-              }}
+              appearance={{ elements: {
+                rootBox: 'flex items-center',
+                organizationSwitcherTrigger: 'min-h-10 px-2 text-xs text-muted hover:text-foreground rounded hover:bg-surface border border-edge transition-colors',
+              } }}
             />
           </div>
+          <UserButton appearance={{ elements: { avatarBox: 'h-8 w-8 ring-1 ring-edge hover:ring-signal transition-colors' } }} />
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="ml-1 h-11 w-11 text-foreground md:hidden" aria-label="Open navigation">
+                <Menu aria-hidden="true" className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[min(20rem,90vw)] p-4 pt-[calc(1rem+env(safe-area-inset-top,0px))] md:hidden">
+              <SheetHeader className="mb-5 text-left">
+                <SheetTitle><span className="block max-w-[16rem] truncate ~text-lg/2xl">{currentProject.name}</span></SheetTitle>
+                <SheetDescription>Project navigation</SheetDescription>
+              </SheetHeader>
+              <DashboardNavigation projectSlug={currentProject.slug} onNavigate={() => setMenuOpen(false)} />
+              <div className="mt-auto border-t border-edge/60 pt-4">
+                <p className="mb-2 text-xs text-muted">Organization</p>
+                <OrganizationSwitcher appearance={{ elements: {
+                  organizationSwitcherTrigger: 'min-h-10 rounded-md border border-edge px-3 text-sm text-foreground hover:bg-edge/40',
+                } }} />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

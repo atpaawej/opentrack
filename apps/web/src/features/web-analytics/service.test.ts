@@ -9,6 +9,7 @@ import {
   getKpiMetrics,
   getTimeSeriesMetrics,
   getBreakdownMetrics,
+  getTopEvents,
   getAllAnalyticsData,
 } from './service';
 
@@ -16,6 +17,7 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
   const testApiKey = `ot_live_test_web_analytics_${Date.now()}`;
   let testProjectId: string;
   let emptyProjectId: string;
+  let rankedProjectId: string;
 
   beforeAll(async () => {
     // 1. Create a project with test events
@@ -41,6 +43,33 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
       })
       .returning();
     emptyProjectId = emptyProj.id;
+
+    const [rankedProject] = await db.insert(projects).values({
+      name: 'Ranked Pages Test Project',
+      slug: `test-ranked-${Date.now()}`,
+      clerkUserId: 'test_user_analytics',
+      apiKey: `ot_live_test_ranked_${Date.now()}`,
+    }).returning();
+    rankedProjectId = rankedProject.id;
+    // Twelve equally popular pageviews, plus an unrelated custom event on one page.
+    await db.insert(events).values([
+      ...Array.from({ length: 12 }, (_, i) => ({
+        projectId: rankedProjectId,
+        eventName: '$pageview',
+        distinctId: `ranked_${i}`,
+        pagePath: `/page-${i}`,
+        referrerDomain: `source-${i}.example`,
+        timestamp: new Date('2026-03-03T12:00:00Z'),
+      })),
+      {
+        projectId: rankedProjectId,
+        eventName: 'signup_started',
+        distinctId: 'ranked_0',
+        pagePath: '/page-0',
+        referrerDomain: 'signup.example',
+        timestamp: new Date('2026-03-03T12:30:00Z'),
+      },
+    ]);
 
     const now = new Date();
     // 3. Insert specific events into testProjectId
@@ -122,6 +151,10 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
       await db.delete(events).where(eq(events.projectId, emptyProjectId));
       await db.delete(projects).where(eq(projects.id, emptyProjectId));
     }
+    if (rankedProjectId) {
+      await db.delete(events).where(eq(events.projectId, rankedProjectId));
+      await db.delete(projects).where(eq(projects.id, rankedProjectId));
+    }
   });
 
   describe('resolveDateRange helper', () => {
@@ -159,7 +192,7 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
     });
 
     it('handles 0 in previous value', () => {
-      expect(calculateChangePercentage(50, 0)).toBe(100);
+      expect(calculateChangePercentage(50, 0)).toBeNull();
       expect(calculateChangePercentage(0, 0)).toBe(0);
     });
   });
@@ -202,6 +235,14 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
   });
 
   describe('KPI Metrics Calculations', () => {
+    it('marks a new metric as not comparable when the previous period is zero', async () => {
+      const kpis = await Effect.runPromise(getKpiMetrics(
+        rankedProjectId, 'custom', '2026-03-03T00:00:00Z', '2026-03-04T00:00:00Z'
+      ));
+      expect(kpis.totalPageviews).toEqual({ value: 12, previousValue: 0, changePercentage: null });
+      expect(kpis.uniqueVisitors.changePercentage).toBeNull();
+    });
+
     it('accurately computes unique visitors, pageviews, sessions, bounce rate, and duration', async () => {
       const exit = await Effect.runPromiseExit(getKpiMetrics(testProjectId, '24h'));
       expect(Exit.isSuccess(exit)).toBe(true);
@@ -236,6 +277,30 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
   });
 
   describe('Time Series Aggregations', () => {
+    it('fills missing UTC hours between the selected bounds when events exist', async () => {
+      const points = await Effect.runPromise(getTimeSeriesMetrics(
+        rankedProjectId, 'custom', 'hour', '2026-03-03T10:00:00Z', '2026-03-03T14:00:00Z'
+      ));
+      expect(points).toEqual([
+        { timestamp: '2026-03-03T10:00:00.000Z', pageviews: 0, visitors: 0, sessions: 0 },
+        { timestamp: '2026-03-03T11:00:00.000Z', pageviews: 0, visitors: 0, sessions: 0 },
+        { timestamp: '2026-03-03T12:00:00.000Z', pageviews: 12, visitors: 12, sessions: 12 },
+        { timestamp: '2026-03-03T13:00:00.000Z', pageviews: 0, visitors: 0, sessions: 0 },
+        { timestamp: '2026-03-03T14:00:00.000Z', pageviews: 0, visitors: 0, sessions: 0 },
+      ]);
+    });
+
+    it('anchors UTC weeks on Monday even when a window starts on Sunday', async () => {
+      const points = await Effect.runPromise(getTimeSeriesMetrics(
+        rankedProjectId, 'custom', 'week', '2026-03-01T10:00:00Z', '2026-03-09T05:00:00Z'
+      ));
+      expect(points).toEqual([
+        { timestamp: '2026-02-23T00:00:00.000Z', pageviews: 0, visitors: 0, sessions: 0 },
+        { timestamp: '2026-03-02T00:00:00.000Z', pageviews: 12, visitors: 12, sessions: 12 },
+        { timestamp: '2026-03-09T00:00:00.000Z', pageviews: 0, visitors: 0, sessions: 0 },
+      ]);
+    });
+
     it('returns time-series data points grouped by granularity', async () => {
       const exit = await Effect.runPromiseExit(
         getTimeSeriesMetrics(testProjectId, '24h', 'hour')
@@ -258,6 +323,24 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
   });
 
   describe('Breakdown Metrics', () => {
+    it('ranks pageviews only and uses all pageviews, not the top ten, as the share denominator', async () => {
+      const pages = await Effect.runPromise(getBreakdownMetrics(
+        rankedProjectId, 'custom', 'pages', '2026-03-03T00:00:00Z', '2026-03-04T00:00:00Z'
+      ));
+
+      expect(pages).toHaveLength(10);
+      expect(pages.every((page) => page.value === 1 && page.percentage === 8.3)).toBe(true);
+      expect(pages.reduce((total, page) => total + page.percentage, 0)).toBeCloseTo(83.3, 0);
+    });
+
+    it('counts event-context referrer shares across all eligible events, including those outside the top ten', async () => {
+      const referrers = await Effect.runPromise(getBreakdownMetrics(
+        rankedProjectId, 'custom', 'referrers', '2026-03-03T00:00:00Z', '2026-03-04T00:00:00Z'
+      ));
+      expect(referrers).toHaveLength(10);
+      expect(referrers.every((referrer) => referrer.value === 1 && referrer.percentage === 7.7)).toBe(true);
+    });
+
     it('returns ranked pages with percentages', async () => {
       const exit = await Effect.runPromiseExit(
         getBreakdownMetrics(testProjectId, '24h', 'pages')
@@ -302,6 +385,18 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
     });
   });
 
+  describe('Custom event activity', () => {
+    it('ranks captured app events without counting automatic pageviews', async () => {
+      const customEvents = await Effect.runPromise(getTopEvents(testProjectId, '24h'));
+      expect(customEvents.map((item) => [item.name, item.value])).toEqual([
+        ['button_clicked', 1],
+        ['signup_started', 1],
+      ]);
+      expect(customEvents.every((item) => item.percentage === 50)).toBe(true);
+      expect(await Effect.runPromise(getTopEvents(emptyProjectId, '24h'))).toEqual([]);
+    });
+  });
+
   describe('getAllAnalyticsData aggregated query', () => {
     it('returns the complete analytics payload in one call', async () => {
       const exit = await Effect.runPromiseExit(
@@ -314,9 +409,11 @@ describe('Web Analytics Slice — Service & Metrics Aggregation', () => {
         expect(payload.kpis.uniqueVisitors.value).toBe(3);
         expect(payload.timeSeries.length).toBeGreaterThan(0);
         expect(payload.breakdowns.pages.length).toBeGreaterThan(0);
+        expect(payload.breakdowns.events.map((event) => event.name)).toContain('signup_started');
         expect(payload.breakdowns.countries.length).toBeGreaterThan(0);
         expect(payload.dateRange).toBe('24h');
         expect(payload.granularity).toBe('hour');
+        expect(payload.timezone).toBe('UTC');
       }
     });
   });

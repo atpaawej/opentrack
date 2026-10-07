@@ -182,7 +182,7 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
       <div className="flex items-center justify-between">
         <Link
           href={`/${projectSlug}/persons`}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors select-none group"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors select-none group"
         >
           <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
           Back to Persons
@@ -190,13 +190,13 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="font-mono text-xs border-zinc-800 bg-zinc-900/60 text-zinc-300"
+            className="font-mono text-xs border-edge bg-surface/60 text-foreground"
           >
             {totalEvents} {totalEvents === 1 ? 'total event' : 'total events'}
           </Badge>
           <Badge
             variant="outline"
-            className="font-mono text-xs border-zinc-800 bg-zinc-900/60 text-zinc-300"
+            className="font-mono text-xs border-edge bg-surface/60 text-foreground"
           >
             {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}
           </Badge>
@@ -204,39 +204,39 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
       </div>
 
       {/* Person Header Card */}
-      <Card className="border-zinc-800/80 bg-zinc-950/80 backdrop-blur-sm shadow-sm overflow-hidden">
+      <Card className="border-edge/80 bg-surface/80 backdrop-blur-sm shadow-sm overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             {/* User Identity Column */}
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-750 text-zinc-100 font-bold font-mono text-lg shadow-inner">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-surface border border-edge text-foreground font-bold font-mono text-lg shadow-inner">
                 {getInitials()}
               </div>
               <div className="space-y-1.5 min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
+                  <h1 className="text-xl font-semibold tracking-tight text-foreground">
                     {name || email || person.distinctId}
                   </h1>
                   {email && name && (
-                    <span className="text-xs text-zinc-400 font-normal">
+                    <span className="text-xs text-muted font-normal">
                       ({email})
                     </span>
                   )}
                 </div>
 
                 {/* Distinct ID with 1-click copy */}
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
-                  <span className="text-zinc-500 font-mono">distinct_id:</span>
-                  <code className="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300 border border-zinc-800 select-all">
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  <span className="text-muted font-mono">distinct_id:</span>
+                  <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-[11px] text-foreground border border-edge select-all">
                     {person.distinctId}
                   </code>
                   <button
                     onClick={handleCopyDistinctId}
-                    className="text-zinc-400 hover:text-zinc-200 p-0.5 rounded transition-colors"
+                    className="text-muted hover:text-foreground p-0.5 rounded transition-colors"
                     title="Copy distinct ID"
                   >
                     {copiedId ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <Check className="h-3.5 w-3.5 text-signal" />
                     ) : (
                       <Copy className="h-3.5 w-3.5" />
                     )}
@@ -246,12 +246,12 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
                 {/* Aliases List if present */}
                 {aliases.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[11px] text-zinc-500">Aliases:</span>
+                    <span className="text-[11px] text-muted">Aliases:</span>
                     {aliases.map((alias) => (
                       <Badge
                         key={alias}
                         variant="secondary"
-                        className="text-[10px] py-0 px-1.5 font-mono border-zinc-850 text-zinc-400 bg-zinc-900"
+                        className="text-[10px] py-0 px-1.5 font-mono border-edge text-muted bg-surface"
                       >
                         {alias}
                       </Badge>
@@ -262,14 +262,14 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
             </div>
 
             {/* Context Stats Column */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 border-t md:border-t-0 md:border-l border-zinc-850 pt-4 md:pt-0 md:pl-6 text-xs shrink-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 border-t md:border-t-0 md:border-l border-edge pt-4 md:pt-0 md:pl-6 text-xs shrink-0">
               {/* Location */}
               <div className="space-y-1">
-                <div className="text-[11px] text-zinc-500 flex items-center gap-1">
+                <div className="text-[11px] text-muted flex items-center gap-1">
                   <Globe className="h-3 w-3" />
                   Location
                 </div>
-                <div className="text-zinc-200 font-medium flex items-center gap-1.5">
+                <div className="text-foreground font-medium flex items-center gap-1.5">
                   {latestEvent?.countryCode ? (
                     <>
                       <span>{getCountryFlag(latestEvent.countryCode)}</span>
@@ -279,34 +279,34 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
                       </span>
                     </>
                   ) : (
-                    <span className="text-zinc-500 font-mono">Unknown</span>
+                    <span className="text-muted font-mono">Unknown</span>
                   )}
                 </div>
               </div>
 
               {/* Device */}
               <div className="space-y-1">
-                <div className="text-[11px] text-zinc-500 flex items-center gap-1">
+                <div className="text-[11px] text-muted flex items-center gap-1">
                   <Monitor className="h-3 w-3" />
                   Device
                 </div>
-                <div className="text-zinc-200 font-medium truncate">
+                <div className="text-foreground font-medium truncate">
                   {latestEvent?.browser || latestEvent?.os ? (
                     `${latestEvent.browser || 'Unknown'} / ${latestEvent.os || 'Unknown'}`
                   ) : (
-                    <span className="text-zinc-500 font-mono">—</span>
+                    <span className="text-muted font-mono">—</span>
                   )}
                 </div>
               </div>
 
               {/* First Seen */}
               <div className="space-y-1">
-                <div className="text-[11px] text-zinc-500 flex items-center gap-1">
+                <div className="text-[11px] text-muted flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   First Seen
                 </div>
                 <div
-                  className="text-zinc-200 font-medium font-mono text-[11px]"
+                  className="text-foreground font-medium font-mono text-[11px]"
                   title={new Date(person.firstSeenAt).toUTCString()}
                 >
                   {formatRelativeTime(new Date(person.firstSeenAt))}
@@ -315,12 +315,12 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
 
               {/* Last Seen */}
               <div className="space-y-1">
-                <div className="text-[11px] text-zinc-500 flex items-center gap-1">
+                <div className="text-[11px] text-muted flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   Last Seen
                 </div>
                 <div
-                  className="text-zinc-200 font-medium font-mono text-[11px]"
+                  className="text-foreground font-medium font-mono text-[11px]"
                   title={new Date(person.lastSeenAt).toUTCString()}
                 >
                   {formatRelativeTime(new Date(person.lastSeenAt))}
@@ -332,19 +332,19 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
       </Card>
 
       {/* User Traits Section */}
-      <Card className="border-zinc-800/80 bg-zinc-950/80 shadow-sm">
+      <Card className="border-edge/80 bg-surface/80 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
           <div>
-            <CardTitle className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <span>User Traits</span>
               <Badge
                 variant="secondary"
-                className="text-[10px] font-mono px-1.5 py-0 border-zinc-800 text-zinc-400"
+                className="text-[10px] font-mono px-1.5 py-0 border-edge text-muted"
               >
                 {Object.keys(properties).length}
               </Badge>
             </CardTitle>
-            <CardDescription className="text-xs text-zinc-400 mt-0.5">
+            <CardDescription className="text-xs text-muted mt-0.5">
               Custom attributes, metadata, and properties associated with this person.
             </CardDescription>
           </div>
@@ -355,42 +355,42 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs border-zinc-800 bg-zinc-900/60 hover:bg-zinc-850 hover:text-zinc-100"
+                className="h-8 text-xs border-edge bg-surface/60 hover:bg-edge hover:text-foreground"
               >
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 Add Trait
               </Button>
             </DialogTrigger>
-            <DialogContent className="border-zinc-800 bg-zinc-950 sm:max-w-md">
+            <DialogContent className="border-edge bg-surface sm:max-w-md">
               <form onSubmit={handleAddTrait}>
                 <DialogHeader>
-                  <DialogTitle className="text-base text-zinc-100">Add or Update Trait</DialogTitle>
-                  <DialogDescription className="text-xs text-zinc-400">
+                  <DialogTitle className="text-base text-foreground">Add or Update Trait</DialogTitle>
+                  <DialogDescription className="text-xs text-muted">
                     Add a custom key-value property to this user profile.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-3 py-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-zinc-300">
+                    <label className="text-xs font-medium text-foreground">
                       Trait Key
                     </label>
                     <Input
                       placeholder="e.g. plan, tier, role, company"
                       value={newKey}
                       onChange={(e) => setNewKey(e.target.value)}
-                      className="h-8 text-xs bg-zinc-900 border-zinc-800 font-mono"
+                      className="h-8 text-xs bg-surface border-edge font-mono"
                       autoFocus
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-zinc-300">
+                    <label className="text-xs font-medium text-foreground">
                       Value
                     </label>
                     <Input
                       placeholder="e.g. enterprise, pro, true, 42"
                       value={newValue}
                       onChange={(e) => setNewValue(e.target.value)}
-                      className="h-8 text-xs bg-zinc-900 border-zinc-800 font-mono"
+                      className="h-8 text-xs bg-surface border-edge font-mono"
                     />
                   </div>
                 </div>
@@ -400,7 +400,7 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
                     variant="ghost"
                     size="sm"
                     onClick={() => setAddTraitOpen(false)}
-                    className="h-8 text-xs text-zinc-400"
+                    className="h-8 text-xs text-muted"
                   >
                     Cancel
                   </Button>
@@ -408,7 +408,7 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
                     type="submit"
                     size="sm"
                     disabled={isSavingTrait || !newKey.trim()}
-                    className="h-8 text-xs bg-zinc-100 text-zinc-900 hover:bg-white"
+                    className="h-8 text-xs bg-foreground text-background hover:bg-white"
                   >
                     {isSavingTrait ? 'Saving...' : 'Save Trait'}
                   </Button>
@@ -420,21 +420,21 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
 
         <CardContent>
           {Object.keys(properties).length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-zinc-850 rounded-lg bg-zinc-900/20 text-zinc-500">
-              <p className="text-xs font-medium text-zinc-400">No custom traits recorded</p>
-              <p className="text-[11px] text-zinc-500 mt-1">
+            <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-edge rounded-lg bg-surface/20 text-muted">
+              <p className="text-xs font-medium text-muted">No custom traits recorded</p>
+              <p className="text-[11px] text-muted mt-1">
                 Click &quot;Add Trait&quot; above or identify the user with properties via SDK.
               </p>
             </div>
           ) : (
-            <div className="rounded-lg border border-zinc-850/80 overflow-hidden">
+            <div className="rounded-lg border border-edge/80 overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b border-zinc-850 bg-zinc-900/40 hover:bg-zinc-900/40">
-                    <TableHead className="text-zinc-400 font-medium text-xs h-9 w-[30%] font-mono">
+                  <TableRow className="border-b border-edge bg-surface/40 hover:bg-surface/40">
+                    <TableHead className="text-muted font-medium text-xs h-9 w-[30%] font-mono">
                       Key
                     </TableHead>
-                    <TableHead className="text-zinc-400 font-medium text-xs h-9">
+                    <TableHead className="text-muted font-medium text-xs h-9">
                       Value
                     </TableHead>
                     <TableHead className="w-12"></TableHead>
@@ -450,12 +450,12 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
                     return (
                       <TableRow
                         key={k}
-                        className="border-b border-zinc-850/60 hover:bg-zinc-900/30 text-xs"
+                        className="border-b border-edge/60 hover:bg-surface/30 text-xs"
                       >
-                        <TableCell className="py-2.5 font-mono text-zinc-300 font-medium">
+                        <TableCell className="py-2.5 font-mono text-foreground font-medium">
                           {k}
                         </TableCell>
-                        <TableCell className="py-2.5 text-zinc-200 font-mono text-[11px] break-all">
+                        <TableCell className="py-2.5 text-foreground font-mono text-[11px] break-all">
                           {formattedValue}
                         </TableCell>
                         <TableCell className="py-2.5 text-right pr-3">
@@ -464,7 +464,7 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
                               navigator.clipboard.writeText(formattedValue);
                               toast.success(`Copied "${k}" value`);
                             }}
-                            className="text-zinc-500 hover:text-zinc-300 transition-colors p-1"
+                            className="text-muted hover:text-foreground transition-colors p-1"
                             title="Copy value"
                           >
                             <Copy className="h-3 w-3" />
@@ -482,23 +482,23 @@ export function PersonProfile({ projectSlug, initialProfile }: PersonProfileProp
 
       {/* Session Activity Timeline Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-850/80 pb-3">
+        <div className="flex items-center justify-between border-b border-edge/80 pb-3">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-zinc-100 flex items-center gap-2">
-              <Activity className="h-4 w-4 text-emerald-400" />
+            <h2 className="text-base font-semibold tracking-tight text-foreground flex items-center gap-2">
+              <Activity className="h-4 w-4 text-signal" />
               Activity Timeline
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Chronological journey of {totalEvents} events grouped into {sessions.length} sessions.
             </p>
           </div>
         </div>
 
         {sessions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-850 p-12 text-center text-zinc-500 bg-zinc-950/40">
-            <Clock className="mx-auto h-8 w-8 text-zinc-600 mb-2" />
-            <p className="text-xs font-medium text-zinc-400">No activity recorded</p>
-            <p className="text-[11px] text-zinc-500 mt-1">
+          <div className="rounded-lg border border-dashed border-edge p-12 text-center text-muted bg-surface/40">
+            <Clock className="mx-auto h-8 w-8 text-muted/60 mb-2" />
+            <p className="text-xs font-medium text-muted">No activity recorded</p>
+            <p className="text-[11px] text-muted mt-1">
               Events triggered by this user will appear here grouped by session.
             </p>
           </div>
@@ -537,22 +537,22 @@ function SessionTimelineCard({
   const startTime = new Date(session.startTime);
 
   return (
-    <div className="rounded-lg border border-zinc-850/90 bg-zinc-950/60 overflow-hidden shadow-xs">
+    <div className="rounded-lg border border-edge/90 bg-surface/60 overflow-hidden shadow-xs">
       {/* Session Header */}
       <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between px-4 py-3 bg-zinc-900/60 hover:bg-zinc-900/90 cursor-pointer border-b border-zinc-850/80 transition-colors select-none"
+        className="flex items-center justify-between px-4 py-3 bg-surface/60 hover:bg-surface/90 cursor-pointer border-b border-edge/80 transition-colors select-none"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-zinc-800 text-zinc-300 font-mono text-xs font-semibold">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-edge text-foreground font-mono text-xs font-semibold">
             #{sessionIndex}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-zinc-200">
+              <span className="text-xs font-semibold text-foreground">
                 Session {session.sessionId ? `(${session.sessionId.slice(0, 14)}...)` : `#${sessionIndex}`}
               </span>
-              <span className="text-[11px] text-zinc-400 font-mono">
+              <span className="text-[11px] text-muted font-mono">
                 {startTime.toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
@@ -572,24 +572,24 @@ function SessionTimelineCard({
         <div className="flex items-center gap-2 text-xs">
           <Badge
             variant="outline"
-            className="border-zinc-800 bg-zinc-900 text-zinc-300 font-mono text-[11px]"
+            className="border-edge bg-surface text-foreground font-mono text-[11px]"
           >
-            <Clock className="h-3 w-3 mr-1 text-zinc-400" />
+            <Clock className="h-3 w-3 mr-1 text-muted" />
             {formatDuration(session.duration)}
           </Badge>
           <Badge
             variant="outline"
-            className="border-zinc-800 bg-zinc-900 text-zinc-300 font-mono text-[11px]"
+            className="border-edge bg-surface text-foreground font-mono text-[11px]"
           >
             {session.pageCount} {session.pageCount === 1 ? 'page' : 'pages'}
           </Badge>
           <Badge
             variant="secondary"
-            className="border-zinc-800 bg-zinc-850 text-zinc-300 font-mono text-[11px]"
+            className="border-edge bg-edge text-foreground font-mono text-[11px]"
           >
             {session.events.length} {session.events.length === 1 ? 'event' : 'events'}
           </Badge>
-          <button className="text-zinc-400 hover:text-zinc-200 ml-1">
+          <button className="text-muted hover:text-foreground ml-1">
             {isExpanded ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
@@ -601,8 +601,8 @@ function SessionTimelineCard({
 
       {/* Events inside Session */}
       {isExpanded && (
-        <div className="p-4 bg-zinc-950/40">
-          <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-zinc-800">
+        <div className="p-4 bg-surface/40">
+          <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-edge">
             {session.events.map((event, eventIdx) => (
               <EventTimelineItem key={event.id || `${session.sessionId}_${eventIdx}`} event={event} />
             ))}
@@ -632,9 +632,9 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
   return (
     <div className="relative group">
       {/* Node Dot on Timeline */}
-      <div className="absolute -left-[19px] top-2 h-2.5 w-2.5 rounded-full bg-zinc-950 border-2 border-zinc-600 group-hover:border-zinc-400 transition-colors" />
+      <div className="absolute -left-[19px] top-2 h-2.5 w-2.5 rounded-full bg-surface border-2 border-edge group-hover:border-edge transition-colors" />
 
-      <div className="rounded-md border border-zinc-850/80 bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors p-3 text-xs">
+      <div className="rounded-md border border-edge/80 bg-surface/30 hover:bg-surface/50 transition-colors p-3 text-xs">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             {/* Event Name Badge */}
@@ -651,14 +651,14 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
 
             {/* Path or action identifier */}
             {event.pagePath && (
-              <span className="font-mono text-zinc-300 text-[11px] truncate max-w-sm bg-zinc-900/80 px-1.5 py-0.5 rounded border border-zinc-850">
+              <span className="font-mono text-foreground text-[11px] truncate max-w-sm bg-surface/80 px-1.5 py-0.5 rounded border border-edge">
                 {event.pagePath}
               </span>
             )}
 
             {/* If button / element text in props */}
             {typeof properties.element_text === 'string' && (
-              <span className="text-zinc-400 text-[11px] truncate">
+              <span className="text-muted text-[11px] truncate">
                 &ldquo;{properties.element_text}&rdquo;
               </span>
             )}
@@ -667,7 +667,7 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
           <div className="flex items-center gap-2 shrink-0">
             {/* Time */}
             <span
-              className="text-[11px] font-mono text-zinc-400"
+              className="text-[11px] font-mono text-muted"
               title={date.toUTCString()}
             >
               {date.toLocaleTimeString(undefined, {
@@ -680,7 +680,7 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
             {/* Toggle Expand */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-zinc-400 hover:text-zinc-200 transition-colors p-1 rounded"
+              className="text-muted hover:text-foreground transition-colors p-1 rounded"
               title={isOpen ? 'Collapse event details' : 'Expand event details'}
             >
               {isOpen ? (
@@ -694,20 +694,20 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
 
         {/* Expanded Details */}
         {isOpen && (
-          <div className="mt-3 pt-3 border-t border-zinc-850">
+          <div className="mt-3 pt-3 border-t border-edge">
             <Tabs defaultValue="properties" className="w-full">
               <div className="flex items-center justify-between mb-2">
-                <TabsList className="h-7 bg-zinc-900 p-0.5 border border-zinc-800">
+                <TabsList className="h-7 bg-surface p-0.5 border border-edge">
                   <TabsTrigger
                     value="properties"
-                    className="text-[11px] h-6 px-2.5 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100"
+                    className="text-[11px] h-6 px-2.5 data-[state=active]:bg-edge data-[state=active]:text-foreground"
                   >
                     <FileText className="h-3 w-3 mr-1" />
                     Properties ({Object.keys(properties).length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="raw"
-                    className="text-[11px] h-6 px-2.5 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100"
+                    className="text-[11px] h-6 px-2.5 data-[state=active]:bg-edge data-[state=active]:text-foreground"
                   >
                     <Code2 className="h-3 w-3 mr-1" />
                     Raw JSON
@@ -718,7 +718,7 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
                   variant="ghost"
                   size="sm"
                   onClick={handleCopyJson}
-                  className="h-6 px-2 text-[11px] text-zinc-400 hover:text-zinc-200"
+                  className="h-6 px-2 text-[11px] text-muted hover:text-foreground"
                 >
                   <Copy className="h-3 w-3 mr-1" />
                   Copy JSON
@@ -728,11 +728,11 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
               {/* Formatted Properties Tab */}
               <TabsContent value="properties" className="mt-0 space-y-2">
                 {hasProps ? (
-                  <div className="rounded border border-zinc-800/80 bg-zinc-950/70 p-2 font-mono text-[11px] max-h-60 overflow-y-auto space-y-1">
+                  <div className="rounded border border-edge/80 bg-surface/70 p-2 font-mono text-[11px] max-h-60 overflow-y-auto space-y-1">
                     {Object.entries(properties).map(([k, v]) => (
                       <div key={k} className="flex items-start gap-2 py-0.5">
-                        <span className="text-zinc-400 shrink-0 select-all">{k}:</span>
-                        <span className="text-zinc-200 select-all break-all">
+                        <span className="text-muted shrink-0 select-all">{k}:</span>
+                        <span className="text-foreground select-all break-all">
                           {typeof v === 'object' && v !== null
                             ? JSON.stringify(v)
                             : String(v)}
@@ -741,30 +741,30 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-zinc-500 py-1 font-mono">
+                  <p className="text-[11px] text-muted py-1 font-mono">
                     No custom event properties.
                   </p>
                 )}
 
                 {/* System Context Pills */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[10px] text-zinc-400">
+                <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[10px] text-muted">
                   {event.browser && (
-                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-zinc-800 bg-zinc-900">
+                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-edge bg-surface">
                       browser: {event.browser} {event.browserVersion || ''}
                     </Badge>
                   )}
                   {event.os && (
-                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-zinc-800 bg-zinc-900">
+                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-edge bg-surface">
                       os: {event.os}
                     </Badge>
                   )}
                   {event.deviceType && (
-                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-zinc-800 bg-zinc-900">
+                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-edge bg-surface">
                       device: {event.deviceType}
                     </Badge>
                   )}
                   {event.countryCode && (
-                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-zinc-800 bg-zinc-900">
+                    <Badge variant="secondary" className="font-mono text-[10px] py-0 px-1.5 border-edge bg-surface">
                       geo: {event.countryCode} {event.city ? `(${event.city})` : ''}
                     </Badge>
                   )}
@@ -773,7 +773,7 @@ function EventTimelineItem({ event }: EventTimelineItemProps) {
 
               {/* Raw JSON Tab */}
               <TabsContent value="raw" className="mt-0">
-                <pre className="rounded border border-zinc-800/80 bg-zinc-950/90 p-3 font-mono text-[11px] text-zinc-300 overflow-x-auto max-h-72">
+                <pre className="rounded border border-edge/80 bg-surface/90 p-3 font-mono text-[11px] text-foreground overflow-x-auto max-h-72">
                   {JSON.stringify(event, null, 2)}
                 </pre>
               </TabsContent>

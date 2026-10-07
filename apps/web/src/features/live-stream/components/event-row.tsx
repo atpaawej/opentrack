@@ -51,14 +51,14 @@ export function EventRow({ event, onSelect }: EventRowProps) {
   return (
     <tr
       onClick={() => onSelect(event)}
-      className="group cursor-pointer border-b border-zinc-850/60 transition-all duration-150 hover:bg-zinc-900/60 active:scale-[0.99] select-none text-xs"
+      className="group cursor-pointer border-b border-edge/60 transition-all duration-150 hover:bg-surface/60 active:scale-[0.99] select-none text-xs"
     >
       {/* Timestamp */}
       <td
-        className="px-4 py-3 whitespace-nowrap text-zinc-400 font-mono text-[11px]"
+        className="px-4 py-3 whitespace-nowrap text-muted font-mono text-[11px]"
         title={fullUtc}
       >
-        <span className="group-hover:text-zinc-200 transition-colors">
+        <span className="group-hover:text-foreground transition-colors">
           {relativeTime}
         </span>
       </td>
@@ -78,7 +78,7 @@ export function EventRow({ event, onSelect }: EventRowProps) {
       </td>
 
       {/* Distinct ID */}
-      <td className="px-4 py-3 whitespace-nowrap font-mono text-zinc-300">
+      <td className="px-4 py-3 whitespace-nowrap font-mono text-foreground">
         <span
           className="truncate max-w-[140px] sm:max-w-[180px] inline-block align-middle"
           title={event.distinctId}
@@ -88,9 +88,9 @@ export function EventRow({ event, onSelect }: EventRowProps) {
       </td>
 
       {/* Path */}
-      <td className="px-4 py-3 whitespace-nowrap font-mono text-zinc-400 text-[11px]">
+      <td className="px-4 py-3 whitespace-nowrap font-mono text-muted text-[11px]">
         <span
-          className="truncate max-w-[160px] sm:max-w-[220px] inline-block align-middle group-hover:text-zinc-200 transition-colors"
+          className="truncate max-w-[160px] sm:max-w-[220px] inline-block align-middle group-hover:text-foreground transition-colors"
           title={event.pagePath || event.pageUrl || '-'}
         >
           {event.pagePath || '-'}
@@ -101,33 +101,33 @@ export function EventRow({ event, onSelect }: EventRowProps) {
       <td className="px-4 py-3 whitespace-nowrap">
         {event.countryCode ? (
           <span
-            className="inline-flex items-center gap-1 rounded bg-zinc-900 px-1.5 py-0.5 text-[11px] font-mono text-zinc-300 border border-zinc-800"
+            className="inline-flex items-center gap-1 rounded bg-surface px-1.5 py-0.5 text-[11px] font-mono text-foreground border border-edge"
             title={`${event.countryCode} ${event.city ? `(${event.city})` : ''}`}
           >
             {flag && <span className="text-xs">{flag}</span>}
             <span>{event.countryCode}</span>
           </span>
         ) : (
-          <span className="text-zinc-600">-</span>
+          <span className="text-muted/60">-</span>
         )}
       </td>
 
       {/* Browser & OS */}
-      <td className="px-4 py-3 whitespace-nowrap text-zinc-400">
+      <td className="px-4 py-3 whitespace-nowrap text-muted">
         <div className="flex items-center gap-1.5">
           {event.browser ? (
             <span
-              className="inline-flex items-center gap-1 rounded bg-zinc-900/80 px-1.5 py-0.5 text-[11px] text-zinc-300 border border-zinc-800"
+              className="inline-flex items-center gap-1 rounded bg-surface/80 px-1.5 py-0.5 text-[11px] text-foreground border border-edge"
               title={`${event.browser} on ${event.os || 'Unknown OS'}`}
             >
-              <Monitor className="h-3 w-3 text-zinc-500" />
+              <Monitor className="h-3 w-3 text-muted" />
               <span>{event.browser}</span>
               {event.os && (
-                <span className="text-zinc-500 text-[10px]">/ {event.os}</span>
+                <span className="text-muted text-[10px]">/ {event.os}</span>
               )}
             </span>
           ) : (
-            <span className="text-zinc-600">-</span>
+            <span className="text-muted/60">-</span>
           )}
         </div>
       </td>
